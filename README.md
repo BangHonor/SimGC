@@ -11,7 +11,7 @@ Following the hierarchical aggregation principles of GNNs, we introduce the Simp
 This straightforward yet effective strategy achieves a significant speedup of up to 10 times compared to existing graph condensation methods while performing on par with state-of-the-art baselines.
 Comprehensive experiments conducted on seven benchmark datasets demonstrate the effectiveness of SimGC in prediction accuracy, condensation time, and generalization capability.
 
-![SimGC_framework 图标]([https://github.com/BangHonor/DisCo/blob/main/SimGC_framework.png](https://github.com/BangHonor/SimGC/blob/main/SimGC_framework.png))
+![SimGC_framework 图标]([https://github.com/BangHonor/DisCo/blob/main/SimGC_framework.png])
 
 ## Requirements
 See requirments.txt file for more information about how to install the dependencies.
