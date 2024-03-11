@@ -38,6 +38,9 @@ Run to reproduce the results of Table 6 in "scripts/nas_transductive.sh", "scrip
 
 Run to reproduce the results of Table 7 in "scripts/kd_transductive.sh" . 
 
+Run to reproduce the results of Fig 2 in "scripts/ablation.sh" . 
+
+
 
 ## Contact
 Please feel free to contact me via email (xiaozhb@zju.edu.cn) if you are interested in my research :)
