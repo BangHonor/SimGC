@@ -32,7 +32,7 @@ python -u SimGC_inductive.py --dataset reddit --reduction_rate=${reduction_rate}
 ## Reproduce
 Please follow the instructions below to replicate the results in the paper.
 
-Run to reproduce the results of Table 2  in "scripts/cora.sh",  "scripts/pubmed.sh", "scripts/ogbn-arxiv.sh", "scripts/ogbn-products.sh", "scripts/reddit.sh", "scripts/reddit2.sh".
+Run to reproduce the results of Table 2  in "scripts/cora.sh",  "scripts/pubmed.sh", "scripts/ogbn-arxiv.sh", "scripts/ogbn-products.sh", "scripts/reddit.sh", "scripts/reddit2.sh", "scripts/flickr.sh".
 
 Run to reproduce the results of Table 6 in "scripts/nas_transductive.sh", "scripts/nas_inductive.sh".
 
