@@ -3,8 +3,6 @@ Official codebase for paper Simple Graph Condensation.  This codebase is based o
 
 ## Overview
 
-**TLDR:** This paper introduces Simple Graph Condensation (SimGC), a scalable graph condensation method for graphs of varying sizes. DisCo incorporates node and edge condensation modules to realize the condensation of nodes and edges in a disentangled manner. The node condensation module synthesizes condensed nodes that maintain a similar feature distribution to the original nodes, while the edge condensation module preserves the graph's topology structure. DisCo successfully scales up to the ogbn-papers100M graph with over 100 million nodes and 1 billion edges. Experimental results on various datasets demonstrate that DisCo outperforms state-of-the-art methods by a significant margin.
-
 **Abstart:** The burdensome training costs on large-scale graphs have aroused significant interest in graph condensation, which involves tuning Graph Neural Networks (GNNs) on a small condensed graph for use on the large-scale original graph. Existing methods primarily focus on aligning key metrics between the condensed and original graphs, such as gradients, output distribution and trajectories of GNNs, \lsy{yielding} satisfactory performance on downstream tasks.
 However, these complex metrics necessitate intricate computations and can potentially disrupt the optimization process of the condensation graph, making the condensation process highly demanding and unstable.
 Motivated by the recent success of simplified models in various fields, we propose a simplified approach to metric alignment in graph condensation, aiming to reduce unnecessary complexity inherited from GNNs.
