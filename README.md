@@ -9,7 +9,7 @@ Motivated by the recent success of simplified models in various fields, we propo
 In our approach, we eliminate external parameters and exclusively retain the target condensed graph during the condensation process.
 Following the hierarchical aggregation principles of GNNs, we introduce the Simple Graph Condensation (SimGC) framework, which aligns the condensed graph with the original graph from the input layer to the prediction layer, guided by a pre-trained Simple Graph Convolution (SGC) model on the original graph. As a result, both graphs possess the similar capability to train GNNs.
 This straightforward yet effective strategy achieves a significant speedup of up to 10 times compared to existing graph condensation methods while performing on par with state-of-the-art baselines.
-Comprehensive experiments conducted on seven benchmark datasets demonstrate the effectiveness of SimGC in prediction accuracy, condensation time, and generalization capability.**
+Comprehensive experiments conducted on seven benchmark datasets demonstrate the effectiveness of SimGC in prediction accuracy, condensation time, and generalization capability.
 
 ![SimGC_framework 图标](https://github.com/BangHonor/DisCo/blob/main/SimGC_framework.png)
 
