@@ -26,7 +26,7 @@ from models.gatedgnn import GatedGNN as GatedGNN_PYG
 from models.appnp import APPNP as APPNP_PYG
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--gpu_id', type=int, default=2, help='gpu id')
+parser.add_argument('--gpu_id', type=int, default=0, help='gpu id')
 parser.add_argument('--parallel_gpu_ids', type=list, default=[0,1,2], help='gpu id')
 parser.add_argument('--dataset', type=str, default='ogbn-arxiv')
 parser.add_argument('--seed', type=int, default=1, help='Random seed.')
@@ -185,11 +185,11 @@ def train_syn():
     optimizer_pge = optim.Adam(pge.parameters(), lr=args.lr_adj)
 
     #alignment
-    concat_feat=feat.to(device)
+    concat_feat=feat_train.to(device)
     temp=feat
     for i in range(args.nlayers):
         aggr=teacher_model.convs[0].propagate(adj.to(device), x=temp.to(device)).detach()
-        concat_feat=torch.cat((concat_feat,aggr),dim=1)
+        concat_feat=torch.cat((concat_feat,aggr[idx_train]),dim=1)
         temp=aggr
 
     concat_feat_mean=[]
@@ -198,7 +198,7 @@ def train_syn():
     coeff_sum=0
     for c in range(nclass):
         if c in num_class_dict:
-            index = torch.where(labels==c)
+            index = torch.where(labels_train==c)
             coe = num_class_dict[c] / max(num_class_dict.values())
             coeff_sum+=coe
             coeff.append(coe)
@@ -313,7 +313,7 @@ def train_syn():
 
 
 def test_nas():
-    if args.teacher_model=='GCN':#每个模型有自己的一套参数设置，teacher和student一样
+    if args.teacher_model=='GCN':
         teacher_model = GCN_PYG(nfeat=d, nhid=512, nclass=nclass, dropout=0.3, nlayers=3, norm='BatchNorm', act='sigmoid').to(device)
     else:
         teacher_model = SGC_PYG(nfeat=d, nhid=512, nclass=nclass, dropout=0, nlayers=3, norm=None, sgc=True).to(device)
@@ -357,12 +357,12 @@ def test_nas():
 
 
 if __name__ == '__main__':
-    #获得大图的所有数据
     root=os.path.abspath(os.path.dirname(__file__))
     data = get_dataset(args.dataset, args.normalize_features)#get a Pyg2Dpr class, contains all index, adj, labels, features
     adj, feat=utils.to_tensor(data.adj, data.features, device='cpu')
     labels=torch.LongTensor(data.labels).to(device)
     idx_train, idx_val, idx_test=data.idx_train, data.idx_val, data.idx_test
+    feat_train=feat[idx_train]
     labels_train, labels_val, labels_test=labels[idx_train], labels[idx_val], labels[idx_test]
     d = feat.shape[1]
     nclass= int(labels.max()+1)
@@ -386,7 +386,7 @@ if __name__ == '__main__':
         )
 
     #teacher_model
-    if args.teacher_model=='GCN':#每个模型有自己的一套参数设置，teacher和student一样
+    if args.teacher_model=='GCN':
         teacher_model = GCN_PYG(nfeat=d, nhid=256, nclass=nclass, dropout=0.5, nlayers=2, norm='BatchNorm').to(device)#pubmed:2+1024+0.5
     else:
         teacher_model = SGC_PYG(nfeat=d, nhid=256, nclass=nclass, dropout=0, nlayers=2, norm=None, sgc=True).to(device)  
@@ -403,7 +403,6 @@ if __name__ == '__main__':
     acc_test = utils.accuracy(output[idx_test], labels_test)
     print("Teacher model test set results:","accuracy= {:.4f}".format(acc_test.item()))
 
-    #小图信息
     labels_syn, num_class_dict = generate_labels_syn()
     labels_syn = torch.LongTensor(labels_syn).to(device)
     nnodes_syn = len(labels_syn)
