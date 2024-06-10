@@ -57,7 +57,7 @@ parser.add_argument('--threshold', type=float, default=0.01, help='adj threshold
 parser.add_argument('--save', type=int, default=1)
 #loop and validation
 parser.add_argument('--teacher_model_loop', type=int, default=1000)
-parser.add_argument('--condensing_loop', type=int, default=1500)#cpra/citesser/arxiv:1500 prudcts:3500 
+parser.add_argument('--condensing_loop', type=int, default=1500)#cora/citesser/arxiv:1500 prudcts:3500 
 parser.add_argument('--student_model_loop', type=int, default=3000)
 parser.add_argument('--teacher_val_stage', type=int, default=50)
 parser.add_argument('--student_val_stage', type=int, default=100)
