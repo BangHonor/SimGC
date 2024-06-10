@@ -21,6 +21,7 @@ from torch_geometric.utils import coalesce
 
 from models.basicgnn import GCN as GCN_PYG, GIN as GIN_PYG, SGC as SGC_PYG, GraphSAGE as SAGE_PYG, JKNet as JKNet_PYG
 from models.mlp import MLP as MLP_PYG
+from models.sgc_multi import SGC_Multi as SGC_Multi_PYG
 from models.parametrized_adj import PGE
 
 
@@ -257,7 +258,6 @@ def train_syn():
             optimizer_feat.step()
 
         if i>=100 and i%100==0:
-            #用此时小图训练模型测试结果
             adj_syn=pge.inference(feat_syn).detach().to(device)
             adj_syn[adj_syn<args.threshold]=0
             adj_syn.requires_grad=False
@@ -424,20 +424,16 @@ if __name__ == '__main__':
             shuffle=False
         )
 
-    #测试NAS
-    # print("测试NAS搜寻结果！")
-    # test_nas()
-
     #teacher_model
     if args.teacher_model=='GCN':
         teacher_model = GCN_PYG(nfeat=d, nhid=256, nclass=nclass, dropout=0.5, nlayers=2, norm='BatchNorm').to(device)
     elif args.teacher_model=='SGC':
         teacher_model = SGC_PYG(nfeat=d, nhid=256, nclass=nclass, dropout=0, nlayers=2, norm=None, sgc=True).to(device)
     else:
-        teacher_model = SAGE_PYG(nfeat=d, nhid=256, nclass=nclass, dropout=0.5, nlayers=2, norm='BatchNorm').to(device)   
+        teacher_model = SGC_Multi_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, dropout=args.dropout, K=args.nlayers, nlayers=3, norm='BatchNorm').to(device)  
 
     if not os.path.exists(root+'/saved_model/teacher/'+args.dataset+'_'+args.teacher_model+'_'+str(args.seed)+'.pt'):
-        print("训练大图！")
+        print("Traning Teacher!")
         train_teacher()
     teacher_model.load_state_dict(torch.load(f'{root}/saved_model/teacher/{args.dataset}_{args.teacher_model}_{args.seed}.pt'))
 
