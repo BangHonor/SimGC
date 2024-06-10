@@ -21,15 +21,14 @@ from torch_geometric.utils import coalesce
 
 from models.basicgnn import GCN as GCN_PYG, GIN as GIN_PYG, SGC as SGC_PYG, GraphSAGE as SAGE_PYG, JKNet as JKNet_PYG
 from models.mlp import MLP as MLP_PYG
+from models.sgc_multi import SGC_Multi as SGC_Multi_PYG
 from models.parametrized_adj import PGE
-from models.gatedgnn import GatedGNN as GatedGNN_PYG
-from models.appnp import APPNP as APPNP_PYG
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu_id', type=int, default=0, help='gpu id')
 parser.add_argument('--parallel_gpu_ids', type=list, default=[0,1,2], help='gpu id')
 parser.add_argument('--dataset', type=str, default='ogbn-arxiv')
-parser.add_argument('--seed', type=int, default=1, help='Random seed.')
+parser.add_argument('--seed', type=int, default=23, help='Random seed.')
 #gnn
 parser.add_argument('--nlayers', type=int, default=2)
 parser.add_argument('--hidden', type=int, default=256)
@@ -39,26 +38,26 @@ parser.add_argument('--dropout', type=float, default=0.5)
 parser.add_argument('--normalize_features', type=bool, default=True)
 parser.add_argument('--batch_size', type=int, default=1024)
 parser.add_argument('--inference', type=bool, default=False)
-parser.add_argument('--teacher_model', type=str, default='SGC')
+parser.add_argument('--teacher_model', type=str, default='SGC_Multi')
 parser.add_argument('--validation_model', type=str, default='GCN')
 parser.add_argument('--model', type=str, default='GCN')
 #ratio
 parser.add_argument('--keep_ratio', type=float, default=1.0)
-parser.add_argument('--reduction_rate', type=float, default=0.01)
+parser.add_argument('--reduction_rate', type=float, default=1.0)
 #condensation
-parser.add_argument('--lr_adj', type=float, default=0.01)#arxiv:0.01+0.05 products:0.01+0.05
+parser.add_argument('--lr_adj', type=float, default=0.01)#arxiv/products:0.01+0.05 cora/citeseer:0.01+0.05
 parser.add_argument('--lr_feat', type=float, default=0.05)
-parser.add_argument('--lr_model', type=float, default=0.001)#arxiv:0.001 cora:0.001 
-parser.add_argument('--lr_teacher_model', type=float, default=0.01)#arxiv:0.01 cora:0.001 
+parser.add_argument('--lr_model', type=float, default=0.001)
+parser.add_argument('--lr_teacher_model', type=float, default=0.001)#arxiv/products:0.001 cora/citeseer:0.00001 
 parser.add_argument('--alignment', type=int, default=1)
-parser.add_argument('--feat_alpha', type=float, default=100, help='feat loss term.')
+parser.add_argument('--feat_alpha', type=float, default=10, help='feat loss term.')
 parser.add_argument('--smoothness', type=int, default=1)
 parser.add_argument('--smoothness_alpha', type=float, default=0.1, help='smoothness loss term.')
-parser.add_argument('--threshold', type=float, default=0.05, help='adj threshold.')#arxiv:0.01 cora:0.05
+parser.add_argument('--threshold', type=float, default=0.01, help='adj threshold.')#arxiv:0.01
 parser.add_argument('--save', type=int, default=1)
 #loop and validation
-parser.add_argument('--teacher_model_loop', type=int, default=600)
-parser.add_argument('--condensing_loop', type=int, default=2500)#arxiv:1500 pubmed:3000 products:2500
+parser.add_argument('--teacher_model_loop', type=int, default=1000)
+parser.add_argument('--condensing_loop', type=int, default=1500)#cpra/citesser/arxiv:1500 prudcts:3500 
 parser.add_argument('--student_model_loop', type=int, default=3000)
 parser.add_argument('--teacher_val_stage', type=int, default=50)
 parser.add_argument('--student_val_stage', type=int, default=100)
@@ -177,9 +176,13 @@ def train_teacher():
 def train_syn():
     start = time.perf_counter()
     if args.validation_model=='GCN':
-        validation_model = GCN_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, dropout=args.dropout, nlayers=args.nlayers, norm='BatchNorm').to(device)
+        if args.dataset in ["cora","citeseer"]:
+            validation_model = GCN_PYG(nfeat=d, nhid=2048, nclass=nclass, dropout=0, nlayers=args.nlayers, norm=None, act=None).to(device)
+        else:
+            validation_model = GCN_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, dropout=args.dropout, nlayers=args.nlayers, norm='BatchNorm', act=args.activation).to(device)
     elif args.validation_model=='SGC':
         validation_model = SGC_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, nlayers=args.nlayers, sgc=True).to(device)
+    
     optimizer = optim.Adam(validation_model.parameters(), lr=args.lr_model)
     optimizer_feat = optim.Adam([feat_syn], lr=args.lr_feat)
     optimizer_pge = optim.Adam(pge.parameters(), lr=args.lr_adj)
@@ -188,7 +191,7 @@ def train_syn():
     concat_feat=feat_train.to(device)
     temp=feat
     for i in range(args.nlayers):
-        aggr=teacher_model.convs[0].propagate(adj.to(device), x=temp.to(device)).detach()
+        aggr=validation_model.convs[0].propagate(adj.to(device), x=temp.to(device)).detach()
         concat_feat=torch.cat((concat_feat,aggr[idx_train]),dim=1)
         temp=aggr
 
@@ -231,7 +234,7 @@ def train_syn():
         concat_feat_syn=feat_syn.to(device)
         temp=feat_syn
         for j in range(args.nlayers):
-            aggr_syn=teacher_model.convs[0].propagate(edge_index_syn, x=temp, edge_weight=edge_weight_syn, size=None)
+            aggr_syn=validation_model.convs[0].propagate(edge_index_syn, x=temp, edge_weight=edge_weight_syn, size=None)
             concat_feat_syn=torch.cat((concat_feat_syn,aggr_syn),dim=1)
             temp=aggr_syn
 
@@ -387,10 +390,14 @@ if __name__ == '__main__':
 
     #teacher_model
     if args.teacher_model=='GCN':
-        teacher_model = GCN_PYG(nfeat=d, nhid=256, nclass=nclass, dropout=0.5, nlayers=2, norm='BatchNorm').to(device)#pubmed:2+1024+0.5
+        teacher_model = GCN_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, dropout=args.dropout, nlayers=args.nlayers, norm='BatchNorm').to(device)#pubmed:2+1024+0.5
+    elif args.teacher_model=='SGC':
+        teacher_model = SGC_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, dropout=args.dropout, nlayers=args.nlayers, norm=None, sgc=True).to(device)  
     else:
-        teacher_model = SGC_PYG(nfeat=d, nhid=256, nclass=nclass, dropout=0, nlayers=2, norm=None, sgc=True).to(device)  
-
+        if args.dataset in ["cora","citeseer"]:
+            teacher_model = SGC_Multi_PYG(nfeat=d, nhid=2048, nclass=nclass, dropout=0, K=args.nlayers, nlayers=2, norm=None).to(device)  
+        else:
+            teacher_model = SGC_Multi_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, dropout=args.dropout, K=args.nlayers, nlayers=3, norm='BatchNorm').to(device)  
     if not os.path.exists(root+'/saved_model/teacher/'+args.dataset+'_'+args.teacher_model+'_'+str(args.seed)+'.pt'):
         print("Traning Teacher!")
         train_teacher()
@@ -443,7 +450,10 @@ if __name__ == '__main__':
     #training on the condensed graph
     start = time.perf_counter()
     if args.model=='GCN':
-        model = GCN_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, dropout=args.dropout, nlayers=args.nlayers, norm='BatchNorm', act=args.activation).to(device)
+        if args.dataset in ["cora","citeseer"]:
+            model = GCN_PYG(nfeat=d, nhid=1024, nclass=nclass, dropout=0, nlayers=args.nlayers, norm=None, act=None).to(device)
+        else:
+            model = GCN_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, dropout=args.dropout, nlayers=args.nlayers, norm='BatchNorm', act=args.activation).to(device)
     elif args.model=='SGC':
         model = SGC_PYG(nfeat=d, nhid=args.hidden, nclass=nclass, dropout=0, nlayers=args.nlayers, sgc=True).to(device)
     elif args.model=='SAGE':
