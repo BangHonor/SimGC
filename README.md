@@ -1,5 +1,5 @@
 # Simple Graph Condensation
-Official codebase for paper Simple Graph Condensation.  This codebase is based on the open-source Pytorch Geometric framework.
+Official codebase for paper Simple Graph Condensation.  This codebase is based on the open-source Pytorch Geometric framework. The paper is here: https://arxiv.org/pdf/2403.14951 .
 
 ## Overview
 
