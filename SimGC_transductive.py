@@ -48,7 +48,7 @@ parser.add_argument('--reduction_rate', type=float, default=1.0)
 parser.add_argument('--lr_adj', type=float, default=0.01)#arxiv/products:0.01+0.05 cora/citeseer:0.001+0.005
 parser.add_argument('--lr_feat', type=float, default=0.05)
 parser.add_argument('--lr_model', type=float, default=0.001)
-parser.add_argument('--lr_teacher_model', type=float, default=0.001)##arxiv:0.01 products:0.001 cora/citeseer:0.00001 
+parser.add_argument('--lr_teacher_model', type=float, default=0.001)##arxiv:0.01 products:0.001 cora/citeseer:0.001 
 parser.add_argument('--alignment', type=int, default=1)
 parser.add_argument('--feat_alpha', type=float, default=10, help='feat loss term.')
 parser.add_argument('--smoothness', type=int, default=1)
