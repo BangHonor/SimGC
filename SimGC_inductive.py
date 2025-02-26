@@ -218,9 +218,8 @@ def train_syn():
         edge_weight_syn = adj_syn[edge_index_syn[0], edge_index_syn[1]]
 
         # smoothness loss
-        # feat_difference=torch.pow(feat_syn[edge_index_syn[0]]-feat_syn[edge_index_syn[1]],2)
         feat_difference=torch.exp(-0.5 * torch.pow(feat_syn[edge_index_syn[0]]-feat_syn[edge_index_syn[1]], 2))
-        smoothness_loss=torch.dot(edge_weight_syn,torch.mean(feat_difference,1).flatten())/torch.sum(edge_weight_syn)
+        smoothness_loss=-torch.dot(edge_weight_syn,torch.mean(feat_difference,1).flatten())/torch.sum(edge_weight_syn)
 
         edge_index_syn, edge_weight_syn = gcn_norm(edge_index_syn, edge_weight_syn, n)
         concat_feat_syn=feat_syn.to(device)
